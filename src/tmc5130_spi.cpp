@@ -72,7 +72,12 @@ int tmc5130_spi::register_read(const uint8_t address, uint32_t &data) {
     /* Send address with dummy data bytes */
     m_spi_library->beginTransaction(m_spi_settings);
     digitalWrite(m_spi_pin_cs, LOW);
-    m_spi_library->transfer(address & 0x7F);
+    m_status_byte = m_spi_library->transfer(address & 0x7F);
+    if (m_status_byte == 0xFF) {
+        digitalWrite(m_spi_pin_cs, HIGH);
+        m_spi_library->endTransaction();
+        return -EIO;
+    }
     m_spi_library->transfer(0x00);
     m_spi_library->transfer(0x00);
     m_spi_library->transfer(0x00);
@@ -84,7 +89,12 @@ int tmc5130_spi::register_read(const uint8_t address, uint32_t &data) {
 
     /* Read data from previously selected address */
     digitalWrite(m_spi_pin_cs, LOW);
-    m_spi_library->transfer(address & 0x7F);
+    m_status_byte = m_spi_library->transfer(address & 0x7F);
+    if (m_status_byte == 0xFF) {
+        digitalWrite(m_spi_pin_cs, HIGH);
+        m_spi_library->endTransaction();
+        return -EIO;
+    }
     data = m_spi_library->transfer(0x00);
     data <<= 8;
     data |= m_spi_library->transfer(0x00);
@@ -115,7 +125,12 @@ int tmc5130_spi::register_write(const uint8_t address, const uint32_t data) {
     /* Send address */
     m_spi_library->beginTransaction(m_spi_settings);
     digitalWrite(m_spi_pin_cs, LOW);
-    uint8_t status_byte = m_spi_library->transfer(address | 0x80);
+    m_status_byte = m_spi_library->transfer(address | 0x80);
+    if (m_status_byte == 0xFF) {
+        digitalWrite(m_spi_pin_cs, HIGH);
+        m_spi_library->endTransaction();
+        return -EIO;
+    }
 
     /* Send data */
     m_spi_library->transfer(data >> 24);
