@@ -259,14 +259,14 @@ class tmc5130 {
 class tmc5130_spi : public tmc5130 {
 
    public:
-    int setup(struct config &config, SPIClass &spi_library, const int spi_pin_cs, const int spi_speed = 4000000);
+    int setup(struct config &config, SPIClass &spi_library, const int spi_cs_pin, const int spi_speed = 4000000);
     int status_read(uint8_t &status);
     int register_read(const uint8_t address, uint32_t &data);
     int register_write(const uint8_t address, const uint32_t data);
 
    protected:
     SPIClass *m_spi_library = NULL;
-    uint8_t m_spi_pin_cs;
+    uint8_t m_spi_cs_pin;
     SPISettings m_spi_settings;
 };
 
