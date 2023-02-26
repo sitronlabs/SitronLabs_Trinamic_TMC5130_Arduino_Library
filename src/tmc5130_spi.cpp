@@ -18,7 +18,7 @@ int tmc5130_spi::setup(struct config &config, SPIClass &spi_library, const int s
 
     /* Save spi settings */
     m_spi_library = &spi_library;
-    m_spi_settings = SPISettings(spi_speed, MSBFIRST, SPI_MODE0);
+    m_spi_settings = SPISettings(spi_speed, MSBFIRST, SPI_MODE3);
     m_spi_cs_pin = spi_cs_pin;
 
     /* Configure cs pin */
