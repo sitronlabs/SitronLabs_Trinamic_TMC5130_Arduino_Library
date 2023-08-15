@@ -33,6 +33,16 @@ XLATCH	KEYWORD2
 target_position_reached_is	KEYWORD2
 RAMP_STAT	KEYWORD2
 target_velocity_reached_is	KEYWORD2
+reference_swap	KEYWORD2
+SW_MODE	KEYWORD2
+reference_l_polarity_set	KEYWORD2
+reference_r_polarity_set	KEYWORD2
+reference_l_active_get	KEYWORD2
+reference_r_active_get	KEYWORD2
+reference_l_latch_enable	KEYWORD2
+reference_r_latch_enable	KEYWORD2
+reference_l_latch_get	KEYWORD2
+reference_r_latch_get	KEYWORD2
 convert_velocity_to_tmc	KEYWORD2
 convert_acceleration_to_tmc	KEYWORD2
 status_read	KEYWORD2

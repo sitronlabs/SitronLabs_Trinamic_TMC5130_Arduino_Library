@@ -1,6 +1,11 @@
 /* Self header */
 #include "tmc5130.h"
 
+/* Macro for delay */
+#ifndef delayNanoseconds
+#define delayNanoseconds(X) delayMicroseconds(1)
+#endif
+
 /**
  *
  * @param[in] config
@@ -75,6 +80,7 @@ int tmc5130_spi::register_read(const uint8_t address, uint32_t &data) {
     m_status_byte = m_spi_library->transfer(address & 0x7F);
     if (m_status_byte == 0xFF) {
         digitalWrite(m_spi_cs_pin, HIGH);
+        delayNanoseconds(10);
         m_spi_library->endTransaction();
         return -EIO;
     }
@@ -83,6 +89,7 @@ int tmc5130_spi::register_read(const uint8_t address, uint32_t &data) {
     m_spi_library->transfer(0x00);
     m_spi_library->transfer(0x00);
     digitalWrite(m_spi_cs_pin, HIGH);
+    delayNanoseconds(10);
 
     /* Wait */
     delayMicroseconds(10);
@@ -103,6 +110,7 @@ int tmc5130_spi::register_read(const uint8_t address, uint32_t &data) {
     data <<= 8;
     data |= m_spi_library->transfer(0x00);
     digitalWrite(m_spi_cs_pin, HIGH);
+    delayNanoseconds(10);
     m_spi_library->endTransaction();
 
     /* Return success */
@@ -128,6 +136,7 @@ int tmc5130_spi::register_write(const uint8_t address, const uint32_t data) {
     m_status_byte = m_spi_library->transfer(address | 0x80);
     if (m_status_byte == 0xFF) {
         digitalWrite(m_spi_cs_pin, HIGH);
+        delayNanoseconds(10);
         m_spi_library->endTransaction();
         return -EIO;
     }
@@ -138,6 +147,7 @@ int tmc5130_spi::register_write(const uint8_t address, const uint32_t data) {
     m_spi_library->transfer(data >> 8);
     m_spi_library->transfer(data);
     digitalWrite(m_spi_cs_pin, HIGH);
+    delayNanoseconds(10);
     m_spi_library->endTransaction();
 
     /* Return success */

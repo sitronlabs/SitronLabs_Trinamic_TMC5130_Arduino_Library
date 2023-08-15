@@ -245,12 +245,27 @@ class tmc5130 {
     int target_position_reached_is(void);
     int target_velocity_reached_is(void);
 
+    /* Reference switches */
+    int reference_swap(bool swap);
+    int reference_l_polarity_set(bool active_high);
+    int reference_r_polarity_set(bool active_high);
+    int reference_l_active_get(void);
+    int reference_r_active_get(void);
+    int reference_l_latch_enable(bool polarity);
+    int reference_r_latch_enable(bool polarity);
+    int reference_l_latch_get(float &position);
+    int reference_r_latch_get(float &position);
+    // int reference_l_stop_enable(bool polarity);
+    // int reference_r_stop_enable(bool polarity);
+
    protected:
     uint32_t convert_velocity_to_tmc(const float velocity);
     uint32_t convert_acceleration_to_tmc(const float acceleration);
     uint8_t m_status_byte = 0x00;
-    uint32_t m_fclk = 13200000;       //!< Frenquency at which the driver is running in Hz
-    uint16_t m_ustep_per_step = 256;  //!< Number of microsteps per step
+    uint32_t m_fclk = 13200000;          //!< Frenquency at which the driver is running in Hz
+    uint16_t m_ustep_per_step = 256;     //!< Number of microsteps per step
+    bool m_reference_l_latched = false;  //!<
+    bool m_reference_r_latched = false;  //!<
 };
 
 /**

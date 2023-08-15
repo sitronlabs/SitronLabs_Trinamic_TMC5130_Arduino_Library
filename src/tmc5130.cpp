@@ -238,6 +238,7 @@ int tmc5130::position_latched_get(float &position) {
 }
 
 /**
+ *
  * @return 1 if the target position has been reached, 0 if it has not, or a negative error code otherwise, in particular:
  *  -EIO If there was an error communicating with the device
  */
@@ -248,7 +249,14 @@ int tmc5130::target_position_reached_is(void) {
     uint32_t reg_ramp_status;
     if (register_read(reg::RAMP_STAT, reg_ramp_status) < 0) {
         return -EIO;
-    } else if (reg_ramp_status & (1 << 9)) {
+    }
+
+    /* Remember flags that are cleared upon reading */
+    m_reference_l_latched = (reg_ramp_status & (1 << 2)) ? true : m_reference_l_latched;
+    m_reference_r_latched = (reg_ramp_status & (1 << 3)) ? true : m_reference_r_latched;
+
+    /* Return wether the target is reached */
+    if (reg_ramp_status & (1 << 9)) {
         return 1;
     } else {
         return 0;
@@ -256,6 +264,7 @@ int tmc5130::target_position_reached_is(void) {
 }
 
 /**
+ *
  * @return 1 if the target velocity has been reached, 0 if it has not, or a negative error code otherwise, in particular:
  *  -EIO If there was an error communicating with the device
  */
@@ -266,7 +275,275 @@ int tmc5130::target_velocity_reached_is(void) {
     uint32_t reg_ramp_status;
     if (register_read(reg::RAMP_STAT, reg_ramp_status) < 0) {
         return -EIO;
-    } else if (reg_ramp_status & (1 << 8)) {
+    }
+
+    /* Remember flags that are cleared upon reading */
+    m_reference_l_latched = (reg_ramp_status & (1 << 2)) ? true : m_reference_l_latched;
+    m_reference_r_latched = (reg_ramp_status & (1 << 3)) ? true : m_reference_r_latched;
+
+    /* Return wether the target is reached */
+    if (reg_ramp_status & (1 << 8)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+/**
+ *
+ * @param[in] swap
+ * @return 0 in case of success, or a negative error code otherwise, in particular:
+ *  -EIO If there was an error communicating with the device
+ */
+int tmc5130::reference_swap(bool swap) {
+
+    /* Set bit 4 of SW_MODE
+     * 1: Swap the left and the right reference switch input REFL and REFR */
+    uint32_t reg_sw_mode;
+    if (register_read(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+    if (swap) {
+        reg_sw_mode |= (1 << 4);
+    } else {
+        reg_sw_mode &= ~(1 << 4);
+    }
+    if (register_write(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+
+    /* Return success */
+    return 0;
+}
+
+/**
+ *
+ * @param[in] active_high
+ * @return 0 in case of success, or a negative error code otherwise, in particular:
+ *  -EIO If there was an error communicating with the device
+ */
+int tmc5130::reference_l_polarity_set(bool active_high) {
+
+    /* Set bit 2 of SW_MODE
+     * Sets the active polarity of the left reference switch input
+     * 0=non-inverted, high active: a high level on REFL stops the motor
+     * 1=inverted, low active: a low level on REFL stops the motor */
+    uint32_t reg_sw_mode;
+    if (register_read(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+    if (active_high) {
+        reg_sw_mode &= ~(1 << 2);
+    } else {
+        reg_sw_mode |= (1 << 2);
+    }
+    if (register_write(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+
+    /* Return success */
+    return 0;
+}
+
+/**
+ *
+ * @param[in] active_high
+ * @return 0 in case of success, or a negative error code otherwise, in particular:
+ *  -EIO If there was an error communicating with the device
+ */
+int tmc5130::reference_r_polarity_set(bool active_high) {
+
+    /* Set bit 3 of SW_MODE
+     * Sets the active polarity of the right reference switch input
+     * 0=non-inverted, high active: a high level on REFR stops the motor
+     * 1=inverted, low active: a low level on REFR stops the motor */
+    uint32_t reg_sw_mode;
+    if (register_read(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+    if (active_high) {
+        reg_sw_mode &= ~(1 << 3);
+    } else {
+        reg_sw_mode |= (1 << 3);
+    }
+    if (register_write(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+
+    /* Return success */
+    return 0;
+}
+
+/**
+ *
+ */
+int tmc5130::reference_l_active_get(void) {
+
+    /* Read bit 0 status_stop_l of RAMP_STAT
+     * Reference switch left status (1=active) */
+    uint32_t reg_ramp_status;
+    if (register_read(reg::RAMP_STAT, reg_ramp_status) < 0) {
+        return -EIO;
+    }
+
+    /* Remember flags that are cleared upon reading */
+    m_reference_l_latched = (reg_ramp_status & (1 << 2)) ? true : m_reference_l_latched;
+    m_reference_r_latched = (reg_ramp_status & (1 << 3)) ? true : m_reference_r_latched;
+
+    /* Return wether the switch is active */
+    return (reg_ramp_status & (1 << 0)) ? 1 : 0;
+}
+
+/**
+ *
+ */
+int tmc5130::reference_r_active_get(void) {
+
+    /* Read bit 1 status_stop_r of RAMP_STAT
+     * Reference switch right status (1=active) */
+    uint32_t reg_ramp_status;
+    if (register_read(reg::RAMP_STAT, reg_ramp_status) < 0) {
+        return -EIO;
+    }
+
+    /* Remember flags that are cleared upon reading */
+    m_reference_l_latched = (reg_ramp_status & (1 << 2)) ? true : m_reference_l_latched;
+    m_reference_r_latched = (reg_ramp_status & (1 << 3)) ? true : m_reference_r_latched;
+
+    /* Return wether the switch is active */
+    return (reg_ramp_status & (1 << 1)) ? 1 : 0;
+}
+
+/**
+ *
+ * @param[in] polarity If true the position will be latched when the reference switch goes active, and conversely.
+ */
+int tmc5130::reference_l_latch_enable(bool polarity) {
+
+    /* Reset flag */
+    m_reference_l_latched = false;
+
+    /* Set bit 6 and 5 of SW_MODE */
+    uint32_t reg_sw_mode;
+    if (register_read(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+    if (polarity) {
+        reg_sw_mode &= ~(1 << 6);  // latch_l_inactive = 0
+        reg_sw_mode |= (1 << 5);   // latch_l_active = 1
+    } else {
+        reg_sw_mode |= (1 << 6);   // latch_l_inactive = 1
+        reg_sw_mode &= ~(1 << 5);  // latch_l_active = 0
+    }
+    if (register_write(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+
+    /* Return success */
+    return 0;
+}
+
+/**
+ *
+ * @param[in] polarity If true the position will be latched when the reference switch goes active, and conversely.
+ */
+int tmc5130::reference_r_latch_enable(bool polarity) {
+
+    /* Reset flag */
+    m_reference_r_latched = false;
+
+    /* Set bit 8 and 7 of SW_MODE */
+    uint32_t reg_sw_mode;
+    if (register_read(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+    if (polarity) {
+        reg_sw_mode &= ~(1 << 8);  // latch_r_inactive = 0
+        reg_sw_mode |= (1 << 7);   // latch_r_active = 1
+    } else {
+        reg_sw_mode |= (1 << 8);   // latch_r_inactive = 1
+        reg_sw_mode &= ~(1 << 7);  // latch_r_active = 0
+    }
+    if (register_write(reg::SW_MODE, reg_sw_mode) < 0) {
+        return -EIO;
+    }
+
+    /* Return success */
+    return 0;
+}
+
+/**
+ *
+ * @param[out] position
+ * @return 1 if the latched position is available, 0 if it is not, or a negative error code otherwise.
+ */
+int tmc5130::reference_l_latch_get(float &position) {
+
+    /* Read bit 2 status_latch_l of RAMP_STAT
+     * 1: Latch left ready */
+    uint32_t reg_ramp_status;
+    if (register_read(reg::RAMP_STAT, reg_ramp_status) < 0) {
+        return -EIO;
+    }
+
+    /* Remember flags that are cleared upon reading */
+    m_reference_l_latched = (reg_ramp_status & (1 << 2)) ? true : m_reference_l_latched;
+    m_reference_r_latched = (reg_ramp_status & (1 << 3)) ? true : m_reference_r_latched;
+
+    /* If latched position is available */
+    if (m_reference_l_latched) {
+
+        /* Retrieve position */
+        uint32_t reg_xlatch;
+        if (register_read(reg::XLATCH, reg_xlatch) < 0) {
+            return -EIO;
+        }
+        position = (int32_t)reg_xlatch;
+        position /= m_ustep_per_step;
+
+        /* Reset flag */
+        m_reference_l_latched = false;
+
+        /* Return success */
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+/**
+ *
+ * @param[out] position
+ * @return 1 if the latched position is available, 0 if it is not, or a negative error code otherwise.
+ */
+int tmc5130::reference_r_latch_get(float &position) {
+
+    /* Read bit 3 status_latch_r of RAMP_STAT
+     * 1: Latch right ready */
+    uint32_t reg_ramp_status;
+    if (register_read(reg::RAMP_STAT, reg_ramp_status) < 0) {
+        return -EIO;
+    }
+
+    /* Remember flags that are cleared upon reading */
+    m_reference_l_latched = (reg_ramp_status & (1 << 2)) ? true : m_reference_l_latched;
+    m_reference_r_latched = (reg_ramp_status & (1 << 3)) ? true : m_reference_r_latched;
+
+    /* If latched position is available */
+    if (m_reference_r_latched) {
+
+        /* Retrieve position */
+        uint32_t reg_xlatch;
+        if (register_read(reg::XLATCH, reg_xlatch) < 0) {
+            return -EIO;
+        }
+        position = (int32_t)reg_xlatch;
+        position /= m_ustep_per_step;
+
+        /* Reset flag */
+        m_reference_r_latched = false;
+
+        /* Return success */
         return 1;
     } else {
         return 0;
