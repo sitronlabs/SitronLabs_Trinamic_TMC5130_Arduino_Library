@@ -1,5 +1,5 @@
 {
-    "name": "Sitron_Labs_Trinamic_TMC5130_Arduino_Library",
+    "name": "Sitron_Labs_TMC5130_Arduino_Library",
     "version": "0.1.0",
     "description": "Arduino library for the Trinamic TMC5130 stepper motor driver.",
     "keywords": "sitron labs,sitron,labs,arduino,library,stepper,motor,controller,spi,trinamic,tmc5130",
@@ -9,6 +9,7 @@
     },
     "frameworks": "arduino",
     "platforms": "*",
+    "dependencies": [],
     "build": {
         "includeDir": "src"
     }
